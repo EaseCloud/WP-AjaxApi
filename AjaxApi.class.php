@@ -29,7 +29,7 @@ abstract class AjaxApi {
      * The ajax callback function
      * @var callback
      */
-    static $callback;
+    static function callback() {}
 
     /**
      * Setup the subclass and init the api hook.
@@ -37,22 +37,27 @@ abstract class AjaxApi {
     static function init() {
 
         // Ensure the keys for the arguments is defined
-        $arguments_default = array(
+        $argument_default = array(
             'method' => 'get',
             'required' => true,
             'default' => '',
         );
-        static::$arguments = array_merge(
-            $arguments_default,
-            static::$arguments
-        );
+        foreach(static::$arguments as &$arg) {
+            $arg = array_merge($argument_default, $arg);
+        }
 
         // Set the hook.
         if(in_array(static::$permission, array('both', 'user'))) {
-            add_action('wp_ajax_'.static::$action, static::$callback);
+            add_action('wp_ajax_'.static::$action, function() {
+                static::callback();
+                exit;
+            });
         }
         if(in_array(static::$permission, array('both', 'guest'))) {
-            add_action('wp_ajax_nopriv_'.static::$action, static::$callback);
+            add_action('wp_ajax_nopriv_'.static::$action, function() {
+                static::callback();
+                exit;
+            });
         }
 
     }
