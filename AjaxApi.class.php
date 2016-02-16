@@ -12,7 +12,7 @@ abstract class AjaxApi {
      *      'key' => argument key,
      *      'title' => argument title,
      *      'method' => GET | post,
-     *      'required' => TRUE | false,
+     *      'required' => FALSE | true,
      *      'default' => '',
      *  ),
      * )
@@ -36,10 +36,12 @@ abstract class AjaxApi {
      */
     static function init() {
 
+        $class = get_called_class();
+
         // Ensure the keys for the arguments is defined
         $argument_default = array(
             'method' => 'get',
-            'required' => true,
+            'required' => false,
             'default' => '',
         );
         foreach(static::$arguments as &$arg) {
@@ -48,14 +50,14 @@ abstract class AjaxApi {
 
         // Set the hook.
         if(in_array(static::$permission, array('both', 'user'))) {
-            add_action('wp_ajax_'.static::$action, function() {
-                static::callback();
+            add_action('wp_ajax_'.static::$action, function() use ($class) {
+                $class::callback();
                 exit;
             });
         }
         if(in_array(static::$permission, array('both', 'guest'))) {
-            add_action('wp_ajax_nopriv_'.static::$action, function() {
-                static::callback();
+            add_action('wp_ajax_nopriv_'.static::$action, function() use ($class) {
+                $class::callback();
                 exit;
             });
         }
@@ -71,17 +73,18 @@ abstract class AjaxApi {
     static function getUrl($args=array()) {
         $url = admin_url('admin-ajax.php?action='.static::$action);
         foreach(static::$arguments as $arg) {
-            if($arg['method'])
-            if(isset($args[$arg['key']])) {
-                $url .= "&{$arg['key']}={$args[$arg['key']]}";
-            } elseif(@$arg['default']) {
-                $url .= "&{$arg['key']}={$arg['default']}";
-            } elseif(@$arg['required']) {
-                return new WP_Error(
-                    'required',
-                    "{$arg['title']} argument missing!",
-                    $args
-                );
+            if(strtoupper($arg['method']) == 'GET') {
+                if(isset($args[$arg['key']])) {
+                    $url .= "&{$arg['key']}={$args[$arg['key']]}";
+                } elseif(@$arg['default']) {
+                    $url .= "&{$arg['key']}={$arg['default']}";
+                } elseif(@$arg['required']) {
+                    return new WP_Error(
+                        'required',
+                        "{$arg['title']} argument missing!",
+                        $args
+                    );
+                }
             }
         }
         return $url;
