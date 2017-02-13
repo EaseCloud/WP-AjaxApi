@@ -41,7 +41,7 @@ abstract class AjaxApi {
         // Ensure the keys for the arguments is defined
         $argument_default = array(
             'method' => 'get',
-            'required' => false,
+            'required' => true,
             'default' => '',
         );
         foreach(static::$arguments as &$arg) {
@@ -67,7 +67,7 @@ abstract class AjaxApi {
     /**
      * Get the client request url for the api
      * @param array $args
-     * @return string|void|WP_Error:
+     * @return string|WP_Error:
      *  Returns the directing url, or WP_Error for failure.
      */
     static function getUrl($args=array()) {
